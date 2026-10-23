@@ -6,9 +6,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/configs"
 	membershipsHandler "github.com/panjiasmoroart/goCatalogMusic26/internal/handler/memberships"
+	tracksHandler "github.com/panjiasmoroart/goCatalogMusic26/internal/handler/tracks"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/models/memberships"
 	membershipsRepo "github.com/panjiasmoroart/goCatalogMusic26/internal/repository/memberships"
+	"github.com/panjiasmoroart/goCatalogMusic26/internal/repository/spotify"
 	membershipsSvc "github.com/panjiasmoroart/goCatalogMusic26/internal/service/memberships"
+	"github.com/panjiasmoroart/goCatalogMusic26/internal/service/tracks"
+	"github.com/panjiasmoroart/goCatalogMusic26/pkg/httpclient"
 	"github.com/panjiasmoroart/goCatalogMusic26/pkg/internalsql"
 )
 
@@ -39,12 +43,20 @@ func main() {
 
 	r := gin.Default()
 
+	httpClient := httpclient.NewClient(&httpclient.Client{})
+
+	spotifyOutbound := spotify.NewSpotifyOutbound(cfg, httpClient)
+
 	membershipRepo := membershipsRepo.NewRepository(db)
 
 	membershipSvc := membershipsSvc.NewService(cfg, membershipRepo)
+	tracksSvc := tracks.NewService(spotifyOutbound)
 
 	membershipHandler := membershipsHandler.NewHandler(r, membershipSvc)
 	membershipHandler.RegisterRoute()
+
+	tracksHandler := tracksHandler.NewHandler(r, tracksSvc)
+	tracksHandler.RegisterRoute()
 
 	r.Run(cfg.Service.Port)
 }
