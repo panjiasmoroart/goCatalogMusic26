@@ -1,6 +1,8 @@
 package httpclient
 
-import "net/http"
+import (
+	"net/http"
+)
 
 //go:generate mockgen -source=client.go -destination=client_mock.go -package=httpclient
 type HTTPClient interface {
@@ -18,5 +20,7 @@ func NewClient(client HTTPClient) *Client {
 }
 
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
+	// fmt.Printf("http client: %+v\n", c.Client)
+
 	return c.Client.Do(req)
 }

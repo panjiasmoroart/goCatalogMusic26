@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/configs"
@@ -33,7 +34,7 @@ func main() {
 		log.Fatalf("failed to initialize configs: %v", err)
 	}
 	cfg = configs.Get()
-	log.Println("config : ", cfg)
+	log.Println("config -->>> : ", cfg)
 
 	db, err := internalsql.Connect(cfg.Database.DataSourceName)
 	if err != nil {
@@ -43,7 +44,8 @@ func main() {
 
 	r := gin.Default()
 
-	httpClient := httpclient.NewClient(&httpclient.Client{})
+	// httpClient := httpclient.NewClient(&httpclient.Client{})
+	httpClient := httpclient.NewClient(&http.Client{})
 
 	spotifyOutbound := spotify.NewSpotifyOutbound(cfg, httpClient)
 
