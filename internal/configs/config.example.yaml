@@ -1,6 +1,10 @@
 service:
   port: ":9090"
-  secretJWT: "keyJWT"
+  SecretKey: "keyJWT"
 
 database:
   dataSourceName: "postgres://admin:root@localhost:5432/database_name?sslmode=disable"
+
+spotifyConfig:
+  clientID: "client-id-###"
+  clientSecret: "client-secret-###"    
