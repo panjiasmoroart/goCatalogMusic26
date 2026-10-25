@@ -2,10 +2,11 @@ package tracks
 
 import (
 	"context"
-	reflect "reflect"
+	"reflect"
 	"testing"
 
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/models/spotify"
+	"github.com/panjiasmoroart/goCatalogMusic26/internal/models/trackactivities"
 	spotifyRepo "github.com/panjiasmoroart/goCatalogMusic26/internal/repository/spotify"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -16,10 +17,11 @@ func Test_service_Search(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockSpotifyOutbound := NewMockspotifyOutbound(mockCtrl)
+	mockTrackActivityRepo := NewMocktrackActivitiesRepository(mockCtrl)
 
 	next := "https://api.spotify.com/v1/search?offset=10&limit=10&query=bohemian%20rhapsody&type=track&market=ID&locale=en-US,en;q%3D0.8"
-	// isLikedTrue := true
-	// isLikedFalse := false
+	isLikedTrue := true
+	isLikedFalse := false
 	type args struct {
 		query     string
 		pageSize  int
@@ -52,6 +54,7 @@ func Test_service_Search(t *testing.T) {
 						Explicit:         false,
 						ID:               "2JiDi0qAXsPwhPqA2qaKGt",
 						Name:             "Bohemian Rhapsody",
+						IsLiked:          &isLikedTrue,
 					},
 					{
 						AlbumType:        "album",
@@ -62,6 +65,7 @@ func Test_service_Search(t *testing.T) {
 						Explicit:         false,
 						ID:               "0U49xOQCWh6zDWcu5r8Why",
 						Name:             "Bohemian Rhapsody - Live At The Montreal Forum / November 1981",
+						IsLiked:          &isLikedFalse,
 					},
 				},
 				Total: 18,
@@ -136,6 +140,16 @@ func Test_service_Search(t *testing.T) {
 						},
 					},
 				}, nil)
+
+				mockTrackActivityRepo.EXPECT().GetBulkSpotifyIDs(gomock.Any(), uint(1), []string{"2JiDi0qAXsPwhPqA2qaKGt", "0U49xOQCWh6zDWcu5r8Why"}).
+					Return(map[string]trackactivities.TrackActivity{
+						"2JiDi0qAXsPwhPqA2qaKGt": {
+							IsLiked: &isLikedTrue,
+						},
+						"0U49xOQCWh6zDWcu5r8Why": {
+							IsLiked: &isLikedFalse,
+						},
+					}, nil)
 			},
 		},
 		{
@@ -156,7 +170,8 @@ func Test_service_Search(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn(tt.args)
 			s := &service{
-				spotifyOutbound: mockSpotifyOutbound,
+				spotifyOutbound:     mockSpotifyOutbound,
+				trackActivitiesRepo: mockTrackActivityRepo,
 			}
 			got, err := s.Search(context.Background(), tt.args.query, tt.args.pageSize, tt.args.pageIndex, 1)
 			if (err != nil) != tt.wantErr {

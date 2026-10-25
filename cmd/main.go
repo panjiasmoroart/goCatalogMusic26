@@ -9,8 +9,10 @@ import (
 	membershipsHandler "github.com/panjiasmoroart/goCatalogMusic26/internal/handler/memberships"
 	tracksHandler "github.com/panjiasmoroart/goCatalogMusic26/internal/handler/tracks"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/models/memberships"
+	"github.com/panjiasmoroart/goCatalogMusic26/internal/models/trackactivities"
 	membershipsRepo "github.com/panjiasmoroart/goCatalogMusic26/internal/repository/memberships"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/repository/spotify"
+	trackactivitiesRepo "github.com/panjiasmoroart/goCatalogMusic26/internal/repository/trackactivities"
 	membershipsSvc "github.com/panjiasmoroart/goCatalogMusic26/internal/service/memberships"
 	"github.com/panjiasmoroart/goCatalogMusic26/internal/service/tracks"
 	"github.com/panjiasmoroart/goCatalogMusic26/pkg/httpclient"
@@ -41,6 +43,7 @@ func main() {
 		log.Fatalf("failed to connect to database, err: %+v", err)
 	}
 	db.AutoMigrate(&memberships.User{})
+	db.AutoMigrate(&trackactivities.TrackActivity{})
 
 	r := gin.Default()
 
@@ -50,9 +53,10 @@ func main() {
 	spotifyOutbound := spotify.NewSpotifyOutbound(cfg, httpClient)
 
 	membershipRepo := membershipsRepo.NewRepository(db)
+	trackAvtivitiesRepo := trackactivitiesRepo.NewRepository(db)
 
 	membershipSvc := membershipsSvc.NewService(cfg, membershipRepo)
-	tracksSvc := tracks.NewService(spotifyOutbound)
+	tracksSvc := tracks.NewService(spotifyOutbound, trackAvtivitiesRepo)
 
 	membershipHandler := membershipsHandler.NewHandler(r, membershipSvc)
 	membershipHandler.RegisterRoute()
